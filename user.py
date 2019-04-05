@@ -10,6 +10,8 @@ import json
 def user_request(request):
     if request.method == 'GET':
         return get_user(request)
+    elif request.method == 'POST':
+        return create_user(request)
 
 
 def get_user(request):
@@ -18,11 +20,11 @@ def get_user(request):
         return Response(status=404)
     else:
         try:
-            stmt: TextClause = text('SELECT "ID", '
+            stmt: TextClause = text('SELECT "Id",'
                                     '"Nickname",'
                                     '"Correo",'
-                                    '"Nombre", '
-                                    '"Apellido_paterno", '
+                                    '"Nombre",'
+                                    '"Apellido_paterno",'
                                     '"Apellido_materno",'
                                     '"Municipio",'
                                     '"Tarjeta",'
@@ -30,21 +32,21 @@ def get_user(request):
                                     '"Fondos" from Bancoco."Cuentahabiente" where "ID" = :id')
             stmt = stmt.bindparams(id=user_id)
 
-            get_user: ResultProxy = db.execute(stmt)
-            result = get_user.fetchall()
+            user: ResultProxy = db.execute(stmt)
+            result = user.fetchall()
             return Response(status=200, body=to_json(result[0]), content_type='text/json')
         except Exception as e:
             print(e)
     return Response(status=404, content_type='text/plain')
 
 
-def _create_user(request):
+def create_user(request):
     try:
         user_data = request.json_body
         stmt: TextClause = text('INSERT into bancoco."Cuentahabiente"("Nickname",'
                                 '"Correo",'
                                 '"Contrasena",'
-                                '"Nombre",'
+                                '"Nombre",' 
                                 '"Apellido_paterno",'
                                 '"Apellido_materno",'
                                 '"Tarjeta",'
