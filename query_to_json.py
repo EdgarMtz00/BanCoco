@@ -8,6 +8,7 @@ def to_dict(query: ResultProxy):
         print(row.keys()[0])
         for index, key in enumerate(row):
             dic.append({row.keys()[index]: key})
+    return dic
 
 
 def to_json(query: ResultProxy):
