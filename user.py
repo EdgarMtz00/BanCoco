@@ -90,7 +90,7 @@ def create_user(request):
 
 
 def modify_user(request):
-    #try:
+    try:
         user_data = request.json_body
         user_stmt = text('SELECT * from bancoco."Cuentahabiente" where "ID" = :id').bindparams(id=user_data['id'])
         users = db.execute(user_stmt)
@@ -139,9 +139,9 @@ def modify_user(request):
                      cp=user['CP'], municipio=user['Municipio'], id=user_data['id'])
         db.execute(update_stmt)
         return Response(status=200)
-    #except Exception as e:
-        #print(e)
-        #return Response(status=404, content_type='text/json')
+    except Exception as e:
+        print(e)
+        return Response(status=404, content_type='text/json')
 
 
 def user_request(request):
