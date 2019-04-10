@@ -3,25 +3,26 @@ from sqlalchemy.engine import ResultProxy
 from sqlalchemy.sql.elements import TextClause
 from pyramid.response import Response
 from database import db
-from query_to_json import to_json
+from encoder import Encoder
+import json
 
 
 def user_request(request):
     if request.method == 'GET':
         return get_user(request)
     elif request.method == 'POST':
-        return post_user(request)
+        return create_user(request)
     elif request.method == 'PUT':
         return update_user(request)
 
 
 def get_user(request):
-    user_id = request.params.get('id', -1)
+    user_id = request.params.get('tarjeta', -1)
     if user_id == -1:
         return Response(status=404)
     else:
         try:
-            stmt: TextClause = text('SELECT "ID", '
+            stmt: TextClause = text('SELECT '
                                     '"Nickname",'
                                     '"Correo",'
                                     '"Nombre", '
@@ -30,17 +31,18 @@ def get_user(request):
                                     '"Municipio",'
                                     '"Tarjeta",'
                                     '"Fecha_Expiracion",'
-                                    '"Fondos" from Bancoco."Cuentahabiente" where "ID" = :id')
-            stmt = stmt.bindparams(id=user_id)
-            get_user: ResultProxy = db.execute(stmt)
-            result = get_user.fetchall()
-            return Response(status=200, body=to_json(result[0]), content_type='text/json')
+                                    '"Fondos" from Bancoco."Cuentahabiente" where "Tarjeta" = :tarjeta')
+            stmt = stmt.bindparams(tarjeta=user_id)
+            user: ResultProxy = db.execute(stmt)
+            result = user.fetchall()
+            return Response(status=200, body=json.dumps([dict(r) for r in result], default=Encoder),
+                            content_type='text/json')
         except Exception as e:
             print(e)
-    return Response(status=404, content_type='text/plain')
+            return Response(status=404, content_type='text/plain')
 
 
-def post_user(request):
+def create_user(request):
     try:
         user_data = request.json_body
         stmt: TextClause = text('INSERT into bancoco."Cuentahabiente"("Nickname",'
@@ -57,58 +59,66 @@ def post_user(request):
                                 '"Municipio") VALUES (:nickname, :correo, :contrasena, '
                                 ':nombre, :apellido_paterno, :apellido_materno, :tarjeta, :fecha_expiracion, :cvv, :fondos, :cp, :municipio)')
 
-        stmt = stmt.bindparams(nickname=user_data['nickName'], correo=user_data['correo'],
+        stmt = stmt.bindparams(nickname=user_data['nickname'], correo=user_data['correo'],
                                contrasena=user_data['contrasena'],
                                nombre=user_data['nombre'], apellido_paterno=user_data['apellidoPaterno'],
-                               apellido_materno=['apellidoMaterno'], tarjeta=['tarjeta'],
-                               fecha_expiracion=user_data['fechaExpiracion'], cvv=user_data['ccv'],
+                               apellido_materno=user_data['apellidoMaterno'], tarjeta=user_data['tarjeta'],
+                               fecha_expiracion=user_data['fechaExpiracion'], cvv=user_data['cvv'],
                                fondos=user_data['fondos'],
                                cp=user_data['cp'], municipio=user_data['municipio'])
         db.execute(stmt)
         return Response(status=200)
-    except Exception:
+    except Exception as e:
+        print(e)
         return Response(status=400)
 
 
+#
+# TODO:fix update_user
+#
 def update_user(request):
-    try:
-        user_data = request.json_body
-        '''
-        user_stmt = text('SELECT * from bancoco."Cuentahabiente" where "ID" = :id').bindparams(id=user_data['id'])
-        user: dict = json.loads(to_json(db.execute(user_stmt)))
-        if 'nombre' in user_data:
-            user['Nombre'] = user_data['nombre']
-        if 'apellidoPaterno' in user_data:
-            user['Apellido_paterno'] = user_data['apellidoPaterno']
-        if 'nombreDeUsuario' in user_data:
-            user['Nombre_usuario'] = user_data['nombreDeUsuario']
-        if 'correo' in user_data:
-            user['Correo'] = user_data['correo']
-        if 'contrasena' in user_data:
-            user['Contrasena'] = user_data['contrasena']
-        '''
-        update_stmt = text(
-            'UPDATE bancoco."Cuentahabiente" SET Nickname = :nickname'
-            '"Correo" = :correo,'
-            '"Contrasena" = :contrasena,'
-            '"Nombre" = :nombre,'
-            '"Apellido_paterno" = :apellidoPaterno,'
-            '"Apellido_materno" = :apellidoMaterno,'
-            '"Tarjeta" = :tarjeta,'
-            '"Fecha_Expiracion = :fechaExpiracion",'
-            '"CVV" = :cvv,'
-            '"Fondos" = :fondos,'
-            '"CP" = :cp,'
-            '"Municipio = :municipio" where "ID" = :id'
-        ).bindparams(nickname=user_data['nickName'], correo=user_data['correo'],
-                     contrasena=user_data['contrasena'],
-                     nombre=user_data['nombre'], apellido_paterno=user_data['apellidoPaterno'],
-                     apellido_materno=['apellidoMaterno'], tarjeta=['tarjeta'],
-                     fecha_expiracion=user_data['fechaExpiracion'], cvv=user_data['ccv'],
-                     fondos=user_data['fondos'],
-                     cp=user_data['cp'], municipio=user_data['municipio'])
-        db.execute(update_stmt)
+    # try:
+    user_data = request.json_body
 
-    except Exception as e:
-        print(e)
-    return Response(status=404, content_type='text/json')
+    user_stmt = text('SELECT * from bancoco."Cuentahabiente" where "Tarjeta" = :tarjeta').bindparams(
+        tarjeta=user_data['tarjeta'])
+    users = db.execute(user_stmt)
+    user = ([dict(r) for r in users])
+    if 'nombre' in user_data:
+        user['Nombre'] = user_data['nombre']
+    if 'apellidoPaterno' in user_data:
+        user['Apellido_paterno'] = user_data['apellidoPaterno']
+        if 'apellidoMaterno' in user_data:
+            user['Apellido_materno'] = user_data['apellidoMaterno']
+    if 'nickname' in user_data:
+        user['Nickname'] = user_data['nickname']
+    # if 'correo' in user_data:
+    # user['Correo'] = user_data['correo']
+    if 'contrasena' in user_data:
+        user['Contrasena'] = user_data['contrasena']
+
+    update_stmt = text(
+        'UPDATE bancoco."Cuentahabiente" SET Nickname = :nickname,'
+        '"Correo" = :correo,'
+        '"Contrasena" = :contrasena,'
+        '"Nombre" = :nombre,'
+        '"Apellido_paterno" = :apellidoPaterno,'
+        '"Apellido_materno" = :apellidoMaterno,'
+        '"Tarjeta" = :tarjeta,'
+        '"Fecha_Expiracion" = :fechaExpiracion,'
+        '"CVV" = :cvv,'
+        '"Fondos" = :fondos,'
+        '"CP" = :cp,'
+        '"Municipio" = :municipio where "Tarjeta" = :tarjeta'
+    ).bindparams(nickname=user['nickname'], correo=user['correo'],
+                 contrasena=user['contrasena'],
+                 nombre=user['nombre'], apellido_paterno=user['apellidoPaterno'],
+                 apellido_materno=user['apellidoMaterno'], tarjeta=user['tarjeta'],
+                 fecha_expiracion=user['fechaExpiracion'], cvv=user['ccv'],
+                 fondos=user['fondos'],
+                 cp=user['cp'], municipio=user['municipio'])
+    db.execute(update_stmt)
+
+# except Exception as e:
+# print(e)
+# return Response(status=404, content_type='text/json')

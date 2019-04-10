@@ -3,43 +3,33 @@ from sqlalchemy.engine import ResultProxy
 from sqlalchemy.sql.elements import TextClause
 from pyramid.response import Response
 from database import db
-from decimal import Decimal
-from datetime import datetime
+from encoder import Encoder
 import json
 
 
-def alchemyencoder(obj):
-    """JSON encoder function for SQLAlchemy special classes."""
-    if isinstance(obj, datetime):
-        return obj.isoformat()
-    elif isinstance(obj, Decimal):
-        return float(obj)
-
 def get_transactions(request):
     user_id = request.params.get('id', -1)
-    if user_id == -1:
-        return Response(status=404)
-    else:
-        try:
-            stmt: TextClause = text('SELECT * from Bancoco."Trasaccion" where "Trasaccion"."Cuentahabiente" = :id')
-            stmt = stmt.bindparams(id=user_id)
-            transaction = db.execute(stmt)
-            return Response(status=200, body=json.dumps([dict(r) for r in transaction][0], default=alchemyencoder),
-                            content_type='text/json')
-        except Exception as e:
-            print(e)
-            return Response(status=404, content_type='text/plain')
+    try:
+        stmt: TextClause = text('SELECT * from Bancoco."Transaccion" where "Tarjeta" = :id')
+        stmt = stmt.bindparams(id=user_id)
+        transaction = db.execute(stmt)
+        return Response(status=200, body=json.dumps([dict(r) for r in transaction], default=Encoder),
+                        content_type='text/json')
+    except Exception as e:
+        print(e)
+        return Response(status=404, content_type='text/plain')
 
 
+# TODO: Restar fondos
 def create_transaction(request):
     try:
         user_data = request.json_body
-        stmt: TextClause = text('INSERT into bancoco."Trasaccion"("Monto",'
+        stmt: TextClause = text('INSERT into bancoco."Transaccion"("Monto",'
                                 '"Status",'
                                 '"Fecha",'
-                                '"Descipcion",'
+                                '"Descripcion",'
                                 '"Institucion",'
-                                '"Cuentahabiente") VALUES (:monto, :status, :fecha, '
+                                '"Tarjeta") VALUES (:monto, :status, :fecha, '
                                 ':desc, :institucion, :cuentahabiente)')
         stmt = stmt.bindparams(monto=user_data['monto'], status=user_data['status'], fecha=user_data['fecha'],
                                desc=user_data['descripcion'],
@@ -54,7 +44,7 @@ def create_transaction(request):
 def delete_transaction(request):
     try:
         user_data = request.json_body
-        stmt: TextClause = text('Delete from bancoco."Trasaccion" where "Trasaccion"."ID" = :id')
+        stmt: TextClause = text('Delete from bancoco."Transaccion" where "ID" = :id')
         stmt = stmt.bindparams(id=user_data['id'])
         db.execute(stmt)
         return Response(status=200, content_type='text/json')
