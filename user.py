@@ -73,52 +73,56 @@ def create_user(request):
         return Response(status=400)
 
 
-#
-# TODO:fix update_user
-#
 def update_user(request):
-    # try:
-    user_data = request.json_body
+    try:
+        user_data = request.json_body
 
-    user_stmt = text('SELECT * from bancoco."Cuentahabiente" where "Tarjeta" = :tarjeta').bindparams(
-        tarjeta=user_data['tarjeta'])
-    users = db.execute(user_stmt)
-    user = ([dict(r) for r in users][0])
-    if 'nombre' in user_data:
-        user['nombre'] = user_data['nombre']
-    if 'apellidoPaterno' in user_data:
-        user['apellidoPaterno'] = user_data['apellidoPaterno']
-    if 'apellidoMaterno' in user_data:
-        user['apellidoMaterno'] = user_data['apellidoMaterno']
-    if 'nickname' in user_data:
-        user['nickname'] = user_data['nickname']
-    if 'correo' in user_data:
-        user['correo'] = user_data['correo']
-    if 'contrasena' in user_data:
-        user['contrasena'] = user_data['contrasena']
+        user_stmt = text('SELECT * from bancoco."Cuentahabiente" where "Tarjeta" = :tarjeta').bindparams(
+            tarjeta=user_data['Tarjeta'])
+        users = db.execute(user_stmt)
+        user = ([dict(r) for r in users][0])
+        if 'Nombre' in user_data:
+            user['Nombre'] = user_data['Nombre']
+        if 'Apellido_paterno' in user_data:
+            user['Apellido_paterno'] = user_data['Apellido_paterno']
+        if 'Apellido_materno' in user_data:
+            user['Apellido_materno'] = user_data['Apellido_materno']
+        if 'nickname' in user_data:
+            user['nickname'] = user_data['nickname']
+        if 'Correo' in user_data:
+            user['Correo'] = user_data['Correo']
+        if 'Contrasena' in user_data:
+            user['Contrasena'] = user_data['Contrasena']
+        if 'Nickname' in user_data:
+            user['Nickname'] = user_data['Nickname']
+        if 'Fondos' in user_data:
+            user['Fondos'] = user_data['Fondos']
+        if 'Municipio' in user_data:
+            user['Municipio'] = user_data['Municipio']
+        if 'CP' in user_data:
+            user['CP'] = user_data['CP']
 
-    update_stmt = text(
-        'UPDATE bancoco."Cuentahabiente" SET "Nickname" = :nickname,'
-        '"Correo" = :correo,'
-        '"Contrasena" = :contrasena,'
-        '"Nombre" = :nombre,'
-        '"Apellido_paterno" = :apellidoPaterno,'
-        '"Apellido_materno" = :apellidoMaterno,'
-        '"Tarjeta" = :tarjeta,'
-        '"Fecha_Expiracion" = :fechaExpiracion,'
-        '"CVV" = :cvv,'
-        '"Fondos" = :fondos,'
-        '"CP" = :cp,'
-        '"Municipio" = :municipio where "Tarjeta" = :tarjeta'
-    ).bindparams(nickname=user['nickname'], correo=user['correo'],
-                 contrasena=user['contrasena'],
-                 nombre=user['nombre'], apellido_paterno=user['apellidoPaterno'],
-                 apellido_materno=user['apellidoMaterno'], tarjeta=user['tarjeta'],
-                 fecha_expiracion=user['fechaExpiracion'], cvv=user['ccv'],
-                 fondos=user['fondos'],
-                 cp=user['cp'], municipio=user['municipio'])
-    db.execute(update_stmt)
-
-# except Exception as e:
-# print(e)
-# return Response(status=404, content_type='text/json')
+        update_stmt = text(
+            'UPDATE bancoco."Cuentahabiente" SET "Nickname" = :nickname,'
+            '"Correo" = :correo,'
+            '"Contrasena" = :contrasena,'
+            '"Nombre" = :nombre,'
+            '"Apellido_paterno" = :apellidoPaterno,'
+            '"Apellido_materno" = :apellidoMaterno,'
+            '"Fecha_Expiracion" = :fechaExpiracion,'
+            '"CVV" = :cvv,'
+            '"Fondos" = :fondos,'
+            '"CP" = :cp,'
+            '"Municipio" = :municipio where "Tarjeta" = :tarjeta'
+        ).bindparams(nickname=user['Nickname'], correo=user['Correo'],
+                     contrasena=user['Contrasena'],
+                     nombre=user['Nombre'], apellidoPaterno=user['Apellido_paterno'],
+                     apellidoMaterno=user['Apellido_materno'], tarjeta=user['Tarjeta'],
+                     fechaExpiracion=user['Fecha_Expiracion'], cvv=user['CVV'],
+                     fondos=user['Fondos'],
+                     cp=user['CP'], municipio=user['Municipio'])
+        db.execute(update_stmt)
+        return Response(status=200, content_type='text/json')
+    except Exception as e:
+        print(e)
+        return Response(status=404, content_type='text/json')
