@@ -83,22 +83,22 @@ def update_user(request):
     user_stmt = text('SELECT * from bancoco."Cuentahabiente" where "Tarjeta" = :tarjeta').bindparams(
         tarjeta=user_data['tarjeta'])
     users = db.execute(user_stmt)
-    user = ([dict(r) for r in users])
+    user = ([dict(r) for r in users][0])
     if 'nombre' in user_data:
-        user['Nombre'] = user_data['nombre']
+        user['nombre'] = user_data['nombre']
     if 'apellidoPaterno' in user_data:
-        user['Apellido_paterno'] = user_data['apellidoPaterno']
-        if 'apellidoMaterno' in user_data:
-            user['Apellido_materno'] = user_data['apellidoMaterno']
+        user['apellidoPaterno'] = user_data['apellidoPaterno']
+    if 'apellidoMaterno' in user_data:
+        user['apellidoMaterno'] = user_data['apellidoMaterno']
     if 'nickname' in user_data:
-        user['Nickname'] = user_data['nickname']
-    # if 'correo' in user_data:
-    # user['Correo'] = user_data['correo']
+        user['nickname'] = user_data['nickname']
+    if 'correo' in user_data:
+        user['correo'] = user_data['correo']
     if 'contrasena' in user_data:
-        user['Contrasena'] = user_data['contrasena']
+        user['contrasena'] = user_data['contrasena']
 
     update_stmt = text(
-        'UPDATE bancoco."Cuentahabiente" SET Nickname = :nickname,'
+        'UPDATE bancoco."Cuentahabiente" SET "Nickname" = :nickname,'
         '"Correo" = :correo,'
         '"Contrasena" = :contrasena,'
         '"Nombre" = :nombre,'
