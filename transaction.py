@@ -23,18 +23,27 @@ def get_transactions(request):
 def create_transaction(request):
         try:
             user_data = request.json_body
+            str = 'En proceso'
             stmt: TextClause = text('INSERT into bancoco."Transaccion"("Monto",'
-                                    '"Status",'
                                     '"Fecha",'
+                                    '"Status",'
                                     '"Descripcion",'
                                     '"Institucion",'
-                                    '"Tarjeta") VALUES (:monto, :status, :fecha, '
-                                    ':desc, :institucion, :cuentahabiente)')
-            stmt = stmt.bindparams(monto=user_data['monto'], status=user_data['status'], fecha=user_data['fecha'],
+                                    '"Tarjeta") VALUES (:monto, NOW(), :status,'
+                                    ':desc, :institucion, :cuentahabiente) RETURNING "ID"')
+            stmt = stmt.bindparams(monto=user_data['monto'], status=str,
                                    desc=user_data['descripcion'],
                                    institucion=user_data['institucion'], cuentahabiente=user_data['tarjeta'])
-            db.execute(stmt)
-            return Response(status=200)
+            results = db.execute(stmt)
+            result = [dict(r) for r in results][0]
+            stmt: TextClause = text('Select "Status" from bancoco."Transaccion" where "ID" = :id')
+            stmt = stmt.bindparams(id=result['ID'])
+            results = db.execute(stmt)
+            result = [dict(r) for r in results][0]
+            if result['Status'] == 'Aprobado':
+                return Response(status=200)
+            else:
+                return Response(status=500)
         except Exception as e:
             print(e)
             return Response(status=400)

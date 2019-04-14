@@ -31,6 +31,7 @@ def get_user(request):
                                     '"Municipio",'
                                     '"Tarjeta",'
                                     '"Fecha_Expiracion",'
+                                    '"Contrasena",'
                                     '"Fondos" from Bancoco."Cuentahabiente" where "Tarjeta" = :tarjeta')
             stmt = stmt.bindparams(tarjeta=user_id)
             user: ResultProxy = db.execute(stmt)
